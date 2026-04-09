@@ -585,7 +585,7 @@
       </div>
     </div>
     <div class="reveal" style="transition-delay:0.15s">
-      <form class="form" name="contacto" action="https://formspree.io/f/xkopavvr" method="POST" onsubmit="handleForm(event)">
+      <form class="form" name="contacto" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="contacto"/><input type="hidden" name="bot-field"/>
         <div class="form-field">
           <label class="form-label">Nombre</label>
           <input class="form-input" type="text" placeholder="Tu nombre" required />
@@ -772,9 +772,25 @@ document.getElementById('aiInput').addEventListener('keydown', e => { if (e.key=
 
 function handleForm(e) {
   e.preventDefault();
-  document.getElementById('formSuccess').style.display = 'block';
-  e.target.reset();
+  const form = e.target;
+  const formData = new FormData(form);
+  fetch('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(formData).toString()
+  })
+  .then(() => {
+    document.getElementById('formSuccess').style.display = 'block';
+    form.reset();
+  })
+  .catch(error => alert('Error al enviar. Por favor escríbenos directamente a kontakt@kairi-analytics.com'));
 }
+
+// Attach form submit listener
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[name="contacto"]');
+  if (form) form.addEventListener('submit', handleForm);
+});
 
 const observer = new IntersectionObserver(entries => {
   entries.forEach(en => { if (en.isIntersecting) en.target.classList.add('visible'); });

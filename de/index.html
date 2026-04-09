@@ -330,7 +330,7 @@
       </div>
     </div>
     <div class="reveal" style="transition-delay:0.15s">
-      <form class="form" name="contacto" action="https://formspree.io/f/xkopavvr" method="POST" onsubmit="handleForm(event)">
+      <form class="form" name="contacto" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="contacto"/><input type="hidden" name="bot-field"/>
         <div class="form-field"><label class="form-label">Name</label><input class="form-input" type="text" placeholder="Ihr Name" required /></div>
         <div class="form-field"><label class="form-label">E-Mail</label><input class="form-input" type="email" placeholder="sie@unternehmen.de" required /></div>
         <div class="form-field"><label class="form-label">Unternehmen (optional)</label><input class="form-input" type="text" placeholder="Name Ihres Unternehmens" /></div>
@@ -384,7 +384,22 @@ async function askAI(){
   catch{el.textContent='Fehler bei der Verbindung zur KI-Engine.';}
 }
 document.getElementById('aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')askAI();});
-function handleForm(e){e.preventDefault();document.getElementById('formSuccess').style.display='block';e.target.reset();}
+function handleForm(e){
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  fetch('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(formData).toString()
+  })
+  .then(() => { document.getElementById('formSuccess').style.display='block'; form.reset(); })
+  .catch(() => alert('Fehler beim Senden. Bitte schreiben Sie uns an kontakt@kairi-analytics.com'));
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[name="contacto"]');
+  if (form) form.addEventListener('submit', handleForm);
+});
 const observer=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('visible');});},{threshold:0.1});
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 initCharts();setFilter('alle',null);loadAI();
