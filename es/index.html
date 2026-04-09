@@ -588,19 +588,19 @@
       <form class="form" name="contacto" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="contacto"/><input type="hidden" name="bot-field"/>
         <div class="form-field">
           <label class="form-label">Nombre</label>
-          <input class="form-input" type="text" placeholder="Tu nombre" required />
+          <input class="form-input" type="text" name="name" placeholder="Tu nombre" required />
         </div>
         <div class="form-field">
           <label class="form-label">Email</label>
-          <input class="form-input" type="email" placeholder="tu@empresa.com" required />
+          <input class="form-input" type="email" name="email" placeholder="tu@empresa.com" required />
         </div>
         <div class="form-field">
           <label class="form-label">Empresa (opcional)</label>
-          <input class="form-input" type="text" placeholder="Nombre de tu empresa" />
+          <input class="form-input" type="text" name="company" placeholder="Nombre de tu empresa" />
         </div>
         <div class="form-field">
           <label class="form-label">¿Qué necesitas?</label>
-          <textarea class="form-input" placeholder="Cuéntanos brevemente qué datos manejas y qué quieres ver en tu dashboard..." required></textarea>
+          <textarea class="form-input" name="message" placeholder="Cuéntanos brevemente qué datos manejas y qué quieres ver en tu dashboard..." required></textarea>
         </div>
         <button type="submit" class="form-submit">Solicitar diagnóstico gratuito →</button>
         <div class="form-success" id="formSuccess">✓ Mensaje enviado. Te contactamos en menos de 24h.</div>
