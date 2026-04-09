@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>KAIRI Analytics</title>
+<script>
+  const lang = navigator.language || navigator.userLanguage || 'en';
+  if (lang.startsWith('es')) window.location.replace('./es/');
+  else if (lang.startsWith('de')) window.location.replace('./de/');
+  else window.location.replace('./en/');
+</script>
+</head>
+<body></body>
+</html>

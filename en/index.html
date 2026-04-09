@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KAIRI Analytics — AI-Powered Dashboards for Your Business</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e0d; --bg2: #161614; --bg3: #1e1e1b;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #f0ede6; --muted: #8a8780; --accent: #c8960a; --accent2: #e8b020;
+    --accent-dim: rgba(200,150,10,0.12); --success-text: #6fcf97; --danger-text: #eb5757;
+    --font-display: 'DM Serif Display', serif; --font-body: 'Outfit', sans-serif; --font-mono: 'DM Mono', monospace;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 300; line-height: 1.7; overflow-x: hidden; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 4rem; border-bottom: 1px solid var(--border); background: rgba(14,14,13,0.85); backdrop-filter: blur(12px); }
+  .nav-logo { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .lang-sw { display:flex; gap:4px; }
+  .lang-opt { font-family: var(--font-mono); font-size:11px; padding:4px 8px; border-radius:3px; border:1px solid var(--border2); color:var(--muted); text-decoration:none; letter-spacing:0.08em; transition:all 0.15s; }
+  .lang-opt:hover { color:var(--text); border-color:var(--muted); }
+  .lang-opt.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
+  .nav-cta { font-size: 12px; padding: 8px 20px; border-radius: 4px; background: var(--accent); color: #000; font-weight: 600; text-decoration: none; letter-spacing: 0.05em; transition: background 0.2s, transform 0.15s; }
+  .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 4rem 4rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; opacity: 0.04; background-image: linear-gradient(var(--text) 1px, transparent 1px), linear-gradient(90deg, var(--text) 1px, transparent 1px); background-size: 60px 60px; }
+  .hero-tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; opacity: 0; animation: fadeUp 0.6s 0.1s forwards; }
+  .hero-tag::before { content: ''; display: block; width: 24px; height: 1px; background: var(--accent); }
+  .hero-h1 { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 6rem); line-height: 1.08; font-weight: 400; max-width: 820px; opacity: 0; animation: fadeUp 0.7s 0.2s forwards; }
+  .hero-h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub { font-size: clamp(1rem, 2vw, 1.2rem); color: var(--muted); max-width: 540px; margin-top: 1.5rem; font-weight: 300; line-height: 1.7; opacity: 0; animation: fadeUp 0.7s 0.35s forwards; }
+  .hero-actions { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s 0.5s forwards; }
+  .btn-primary { padding: 14px 32px; background: var(--accent); color: #000; font-family: var(--font-body); font-size: 14px; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-ghost { padding: 14px 32px; background: transparent; color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 400; border: 1px solid var(--border2); border-radius: 4px; cursor: pointer; text-decoration: none; letter-spacing: 0.04em; transition: border-color 0.2s, transform 0.15s; }
+  .btn-ghost:hover { border-color: var(--muted); transform: translateY(-2px); }
+  .hero-stats { display: flex; gap: 3rem; margin-top: 4rem; padding-top: 2.5rem; border-top: 1px solid var(--border); opacity: 0; animation: fadeUp 0.7s 0.65s forwards; flex-wrap: wrap; }
+  .stat-num { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+  .section { padding: 6rem 4rem; }
+  .section-tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+  .section-h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.15; font-weight: 400; max-width: 640px; }
+  .section-h2 em { font-style: italic; color: var(--accent); }
+  .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 3rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .pain-card { background: var(--bg2); padding: 2rem; transition: background 0.2s; }
+  .pain-card:hover { background: var(--bg3); }
+  .pain-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+  .pain-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .pain-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .demo-section { padding: 6rem 4rem; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .demo-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
+  .demo-note { font-size: 12px; color: var(--muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success-text); display: inline-block; animation: pulse 2s infinite; }
+  .dashboard-shell { background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; }
+  .dash-bar { background: var(--bg3); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dash-url { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .dash-inner { padding: 1.5rem; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .kpi-card { background: var(--bg3); border-radius: 6px; padding: 14px 16px; border: 1px solid var(--border); }
+  .kpi-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--font-mono); }
+  .kpi-val { font-size: 1.4rem; font-weight: 500; line-height: 1; }
+  .kpi-delta { font-size: 11px; margin-top: 5px; }
+  .kpi-up { color: var(--success-text); } .kpi-down { color: var(--danger-text); }
+  .charts-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .chart-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+  .chart-lbl { font-size: 11px; color: var(--muted); margin-bottom: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+  .bottom-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .alert-panel { background: rgba(235,87,87,0.06); border: 1px solid rgba(235,87,87,0.2); border-radius: 6px; padding: 14px; }
+  .alert-lbl { font-size: 10px; color: var(--danger-text); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .alert-item { font-size: 11px; color: rgba(235,87,87,0.8); padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .ai-panel { background: var(--accent-dim); border: 1px solid rgba(200,150,10,0.2); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; }
+  .ai-lbl { font-size: 10px; color: var(--accent); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .ai-response { font-size: 11px; color: var(--text); line-height: 1.6; flex: 1; min-height: 52px; }
+  .ai-input-row { display: flex; gap: 6px; margin-top: 10px; }
+  .ai-input { flex: 1; font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(200,150,10,0.3); border-radius: 4px; color: var(--text); outline: none; font-family: var(--font-body); }
+  .ai-input:focus { border-color: var(--accent); }
+  .ai-ask-btn { font-size: 11px; padding: 6px 12px; border-radius: 4px; background: var(--accent); border: none; color: #000; cursor: pointer; font-weight: 600; font-family: var(--font-body); transition: background 0.2s; }
+  .ai-ask-btn:hover { background: var(--accent2); }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .f-btn { font-size: 10px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border2); background: transparent; color: var(--muted); cursor: pointer; font-family: var(--font-mono); letter-spacing: 0.05em; transition: all 0.15s; }
+  .f-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .tbl th { color: var(--muted); font-weight: 400; padding: 4px 8px 8px 0; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; text-align: left; }
+  .tbl td { padding: 7px 8px 7px 0; color: var(--text); border-bottom: 1px solid var(--border); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .pill { font-size: 9px; padding: 2px 8px; border-radius: 20px; }
+  .pill-up { background: rgba(111,207,151,0.15); color: var(--success-text); }
+  .pill-down { background: rgba(235,87,87,0.15); color: var(--danger-text); }
+  .pill-flat { background: rgba(138,135,128,0.15); color: var(--muted); }
+  .legend-row { display: flex; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+  .legend-sq { width: 8px; height: 8px; border-radius: 2px; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; }
+  .step { padding: 2rem 1.5rem; }
+  .step-num { font-family: var(--font-display); font-size: 3rem; color: var(--border2); line-height: 1; margin-bottom: 1rem; }
+  .step-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .packages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .pkg { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; position: relative; transition: border-color 0.2s, transform 0.2s; }
+  .pkg:hover { border-color: var(--border2); transform: translateY(-4px); }
+  .pkg.featured { border-color: var(--accent); }
+  .pkg.featured::before { content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; font-size: 9px; font-weight: 700; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.1em; font-family: var(--font-mono); }
+  .pkg-name { font-family: var(--font-mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+  .pkg-price { font-family: var(--font-display); font-size: 2.5rem; line-height: 1; margin-bottom: 0.25rem; }
+  .pkg-period { font-size: 12px; color: var(--muted); margin-bottom: 1.5rem; }
+  .pkg-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
+  .pkg-features li { font-size: 13px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; }
+  .pkg-features li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+  .pkg-btn { width: 100%; padding: 12px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font-body); letter-spacing: 0.04em; transition: all 0.2s; text-align: center; text-decoration: none; display: block; }
+  .pkg-btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+  .pkg-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .pkg-btn-filled { background: var(--accent); border: none; color: #000; font-weight: 600; }
+  .pkg-btn-filled:hover { background: var(--accent2); }
+  .contact-section { padding: 6rem 4rem; background: var(--bg2); border-top: 1px solid var(--border); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .contact-h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; font-weight: 400; margin-bottom: 1rem; }
+  .contact-h2 em { font-style: italic; color: var(--accent); }
+  .contact-sub { font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .contact-data { margin-top: 2rem; display: flex; flex-direction: column; gap: 12px; }
+  .contact-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .contact-item a { color: var(--accent); text-decoration: none; }
+  .contact-icon { width: 32px; height: 32px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .form { display: flex; flex-direction: column; gap: 14px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .form-input { padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  textarea.form-input { resize: vertical; min-height: 100px; }
+  .form-submit { padding: 14px; background: var(--accent); border: none; border-radius: 4px; color: #000; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font-body); letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s; }
+  .form-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+  .form-success { display: none; padding: 1rem; background: rgba(111,207,151,0.1); border: 1px solid rgba(111,207,151,0.3); border-radius: 4px; color: var(--success-text); font-size: 13px; text-align: center; }
+  footer { padding: 2rem 4rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .footer-text { font-size: 12px; color: var(--muted); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s, transform 0.7s; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; } .nav-links { display: none; }
+    .hero, .section, .demo-section, .contact-section { padding: 5rem 1.5rem 3rem; }
+    .kpi-row, .charts-grid, .bottom-panels, .pain-grid, .steps, .packages, .contact-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 2rem; flex-wrap: wrap; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">KAIRI Analytics</div>
+  <div class="nav-links">
+    <a href="#demo">Live demo</a>
+    <a href="#process">Process</a>
+    <a href="#packages">Packages</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="lang-sw">
+      <a href="../en/" class="lang-opt active">EN</a>
+      <a href="../de/" class="lang-opt">DE</a>
+      <a href="../es/" class="lang-opt">ES</a>
+    </div>
+    <a href="#contact" class="nav-cta">Talk to an expert</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-tag">Business intelligence · Dresden, Germany</div>
+  <h1 class="hero-h1">Your business runs on data that's <em>two weeks old.</em> Let's change that.</h1>
+  <p class="hero-sub">We build AI-powered dashboards that update themselves, surface what matters, and detect problems before you ever open a spreadsheet.</p>
+  <div class="hero-actions">
+    <a href="#demo" class="btn-primary">See live demo</a>
+    <a href="#contact" class="btn-ghost">Talk to us</a>
+  </div>
+  <div class="hero-stats">
+    <div><div class="stat-num">1 wk</div><div class="stat-label">typical delivery time</div></div>
+    <div><div class="stat-num">€0</div><div class="stat-label">infrastructure for SMEs</div></div>
+    <div><div class="stat-num">24/7</div><div class="stat-label">real-time data</div></div>
+    <div><div class="stat-num">AI</div><div class="stat-label">built-in analysis</div></div>
+  </div>
+</section>
+
+<section class="section" id="problem">
+  <div class="reveal">
+    <div class="section-tag">The problem</div>
+    <h2 class="section-h2">How many hours does your team spend on <em>manual reports</em> every week?</h2>
+  </div>
+  <div class="pain-grid reveal" style="transition-delay:0.15s">
+    <div class="pain-card"><div class="pain-icon">📊</div><div class="pain-title">Endless spreadsheets</div><div class="pain-text">Hours consolidating sheets every Monday. Errors, conflicting versions, numbers that don't add up.</div></div>
+    <div class="pain-card"><div class="pain-icon">⏳</div><div class="pain-title">Delayed decisions</div><div class="pain-text">By the time the report is ready, the data is already a week old. Markets don't wait.</div></div>
+    <div class="pain-card"><div class="pain-icon">🔍</div><div class="pain-title">Invisible problems</div><div class="pain-text">A sales drop, critical stock, a churning customer — nobody sees it until it's too late.</div></div>
+  </div>
+</section>
+
+<section class="demo-section" id="demo">
+  <div class="demo-header reveal">
+    <div>
+      <div class="section-tag">Live demo</div>
+      <h2 class="section-h2" style="max-width:500px">This is what your business looks like <em>in real time</em></h2>
+    </div>
+    <div class="demo-note"><span class="live-dot"></span> AI active · Sample data</div>
+  </div>
+  <div class="dashboard-shell reveal" style="transition-delay:0.2s">
+    <div class="dash-bar">
+      <div class="dash-dot" style="background:#ff5f57"></div>
+      <div class="dash-dot" style="background:#febc2e"></div>
+      <div class="dash-dot" style="background:#28c840"></div>
+      <div class="dash-url">yourcompany.kairi-analytics.com · Sales dashboard</div>
+    </div>
+    <div class="dash-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Control panel</div>
+          <div style="font-size:16px;font-weight:500;">Sales &amp; Performance · Jan–Jun 2025</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">Updated: 2 min ago</div>
+      </div>
+      <div class="filter-row">
+        <button class="f-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="f-btn" onclick="setFilter('north',this)">North</button>
+        <button class="f-btn" onclick="setFilter('south',this)">South</button>
+        <button class="f-btn" onclick="setFilter('online',this)">Online</button>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="kpi-lbl">Total sales</div><div class="kpi-val" id="kv1">€142,800</div><div class="kpi-delta kpi-up" id="kd1">▲ 18.4% vs last month</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">Avg. ticket</div><div class="kpi-val" id="kv2">€284</div><div class="kpi-delta kpi-up" id="kd2">▲ 6.2%</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">Active clients</div><div class="kpi-val" id="kv3">503</div><div class="kpi-delta kpi-up" id="kd3">▲ 31 new</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">Conv. rate</div><div class="kpi-val" id="kv4">6.8%</div><div class="kpi-delta kpi-down" id="kd4">▼ 0.4 pp</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-panel">
+          <div class="chart-lbl">Monthly sales trend</div>
+          <div class="legend-row"><span class="legend-item"><span class="legend-sq" style="background:#c8960a"></span>2025</span><span class="legend-item"><span class="legend-sq" style="background:#5a4a1a"></span>2024</span></div>
+          <div style="position:relative;height:160px;"><canvas id="lineChart"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-lbl">Sales by category</div>
+          <div style="position:relative;height:130px;"><canvas id="donutChart"></canvas></div>
+          <div class="legend-row" style="margin-top:8px;">
+            <span class="legend-item"><span class="legend-sq" style="background:#c8960a"></span>Electronics 38%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#1D9E75"></span>Home 27%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#5a4a1a"></span>Fashion 21%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#4a4a4a"></span>Other 14%</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-panel" style="margin-bottom:10px;">
+        <div class="chart-lbl">Top products — June 2025</div>
+        <table class="tbl"><thead><tr><th>Product</th><th>Region</th><th>Units</th><th>Revenue</th><th>Trend</th></tr></thead><tbody id="tableBody"></tbody></table>
+      </div>
+      <div class="bottom-panels">
+        <div class="alert-panel">
+          <div class="alert-lbl">Automatic alerts</div>
+          <div class="alert-item">◆ Critical stock: Model X7 — only 8 units left</div>
+          <div class="alert-item">◆ Online conversion dropped 12% this week</div>
+          <div class="alert-item">◆ South region exceeds monthly target (+23%)</div>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-lbl"><span class="live-dot"></span> AI analysis</div>
+          <div class="ai-response" id="aiText">Loading analysis...</div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiInput" type="text" placeholder="Ask anything about your data..." />
+            <button class="ai-ask-btn" onclick="askAI()">Ask</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="process">
+  <div class="reveal">
+    <div class="section-tag">How it works</div>
+    <h2 class="section-h2">From your Excel data to your dashboard <em>in one week</em></h2>
+  </div>
+  <div class="steps reveal" style="transition-delay:0.15s;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:3rem;">
+    <div class="step" style="border-right:1px solid var(--border);"><div class="step-num">01</div><div class="step-title">Free diagnosis</div><div class="step-text">30-minute call to understand your data, your sources, and which decisions you want to make faster.</div></div>
+    <div class="step" style="border-right:1px solid var(--border);"><div class="step-num">02</div><div class="step-title">Design & validation</div><div class="step-text">We show you a prototype before building anything. You approve — not us.</div></div>
+    <div class="step" style="border-right:1px solid var(--border);"><div class="step-num">03</div><div class="step-title">Build & integrate</div><div class="step-text">We connect your data sources, build the dashboard, and deploy it on your private URL.</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-title">Delivery & support</div><div class="step-text">1-hour onboarding for your team. First month of support included. You decide what's next.</div></div>
+  </div>
+</section>
+
+<section class="section" id="packages" style="border-top:1px solid var(--border);">
+  <div class="reveal">
+    <div class="section-tag">Packages</div>
+    <h2 class="section-h2">Clear pricing, <em>no surprises</em></h2>
+  </div>
+  <div class="packages reveal" style="transition-delay:0.15s">
+    <div class="pkg">
+      <div class="pkg-name">Starter</div><div class="pkg-price">€500</div><div class="pkg-period">one-time · delivered in 5 days</div>
+      <ul class="pkg-features"><li>1 dashboard with up to 5 KPIs</li><li>1 data source (Excel, CSV, Google Sheets)</li><li>Daily automatic update</li><li>Private URL accessible from any device</li><li>1 month support included</li></ul>
+      <a href="#contact" class="pkg-btn pkg-btn-outline">Get started</a>
+    </div>
+    <div class="pkg featured">
+      <div class="pkg-name">Business</div><div class="pkg-price">€1,200</div><div class="pkg-period">one-time · delivered in 7 days</div>
+      <ul class="pkg-features"><li>Full dashboard with unlimited KPIs</li><li>Up to 3 connected data sources</li><li>Real-time or scheduled updates</li><li>Automatic alerts via email or Telegram</li><li>AI analysis built into the panel</li><li>Interactive filters by region, product, period</li><li>1 month priority support</li></ul>
+      <a href="#contact" class="pkg-btn pkg-btn-filled">Get started</a>
+    </div>
+    <div class="pkg">
+      <div class="pkg-name">AI-Powered</div><div class="pkg-price">€2,400</div><div class="pkg-period">one-time · delivered in 10 days</div>
+      <ul class="pkg-features"><li>Everything in Business</li><li>Automatic anomaly detection</li><li>ML-based forecasting & projections</li><li>Natural language chat with your data</li><li>ERP or custom database integration</li><li>3 months support & evolution included</li></ul>
+      <a href="#contact" class="pkg-btn pkg-btn-outline">Talk to us</a>
+    </div>
+  </div>
+  <p class="reveal" style="text-align:center;font-size:13px;color:var(--muted);margin-top:1.5rem;transition-delay:0.3s;">Optional monthly maintenance from €150/month · Initial diagnosis always free</p>
+</section>
+
+<section class="contact-section" id="contact">
+  <div class="contact-grid">
+    <div class="reveal">
+      <div class="section-tag">Contact</div>
+      <h2 class="contact-h2">Let's talk about your <em>data</em></h2>
+      <p class="contact-sub">The initial diagnosis is free and non-binding. In 30 minutes we'll know if and how we can help you.</p>
+      <div class="contact-data">
+        <div class="contact-item"><div class="contact-icon">✉</div><a href="mailto:kontakt@kairi-analytics.com">kontakt@kairi-analytics.com</a></div>
+        <div class="contact-item"><div class="contact-icon">in</div><a href="https://www.linkedin.com/in/kent-valera-chirinos-44ba721b/?locale=en_US" target="_blank">linkedin.com/in/kent-valera-chirinos-44ba721b</a></div>
+        <div class="contact-item"><div class="contact-icon">📍</div>Dresden, Germany · Remote service worldwide</div>
+      </div>
+    </div>
+    <div class="reveal" style="transition-delay:0.15s">
+      <form class="form" name="contacto" action="https://formspree.io/f/xkopavvr" method="POST" onsubmit="handleForm(event)">
+        <div class="form-field"><label class="form-label">Name</label><input class="form-input" type="text" placeholder="Your name" required /></div>
+        <div class="form-field"><label class="form-label">Email</label><input class="form-input" type="email" placeholder="you@company.com" required /></div>
+        <div class="form-field"><label class="form-label">Company (optional)</label><input class="form-input" type="text" placeholder="Your company name" /></div>
+        <div class="form-field"><label class="form-label">What do you need?</label><textarea class="form-input" placeholder="Tell us briefly what data you manage and what you'd like to see in your dashboard..." required></textarea></div>
+        <button type="submit" class="form-submit">Request free diagnosis →</button>
+        <div class="form-success" id="formSuccess">✓ Message sent. We'll get back to you within 24h.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">KAIRI Analytics · Dresden, DE</div>
+  <div class="footer-text">© 2025 · AI-powered dashboards for SMEs</div>
+</footer>
+
+<script>
+const DATA = {
+  all: { kpis:['€142,800','€284','503','6.8%'], deltas:[['up','▲ 18.4% vs last month'],['up','▲ 6.2%'],['up','▲ 31 new'],['down','▼ 0.4 pp']], line2025:[18200,21400,19800,24600,27300,31500], line2024:[14100,16200,17800,19200,21000,22900], rows:[['Smart TV 55"','North',142,'€28,400','up'],['Coffee Pro','Online',318,'€19,080','up'],['Modular Sofa','South',67,'€16,750','flat'],['Running Shoes','North',412,'€14,832','up'],['Tablet 10"','Online',98,'€12,250','down']] },
+  north: { kpis:['€58,300','€312','189','7.4%'], deltas:[['up','▲ 22.1%'],['up','▲ 8.1%'],['up','▲ 14 new'],['up','▲ 0.2 pp']], line2025:[7200,9100,8400,10800,11200,11600], line2024:[5600,6800,7200,8100,8900,9400], rows:[['Smart TV 55"','North',142,'€28,400','up'],['Running Shoes','North',412,'€14,832','up'],['Fridge XL','North',24,'€9,600','flat'],['BT Headphones','North',67,'€3,350','up'],['Dining Table','North',12,'€2,160','down']] },
+  south: { kpis:['€47,100','€261','214','6.1%'], deltas:[['up','▲ 23.0%'],['up','▲ 4.8%'],['up','▲ 9 new'],['flat','→ unchanged']], line2025:[5800,7200,6900,8100,9400,9700], line2024:[4800,5600,6100,6800,7200,7800], rows:[['Modular Sofa','South',67,'€16,750','flat'],['Coffee Pro','South',98,'€5,880','up'],['LED Lamp','South',210,'€4,200','up'],['Smart TV 43"','South',31,'€4,030','down'],['Office Chair','South',44,'€3,080','flat']] },
+  online: { kpis:['€37,400','€298','100','6.3%'], deltas:[['down','▼ 3.2%'],['up','▲ 2.1%'],['up','▲ 8 new'],['down','▼ 1.2 pp']], line2025:[5200,5100,4500,5700,8700,8200], line2024:[3700,4800,4500,4300,5900,6000], rows:[['Coffee Pro','Online',318,'€19,080','up'],['Tablet 10"','Online',98,'€12,250','down'],['BT Headphones','Online',102,'€5,100','up'],['Mech. Keyboard','Online',28,'€1,960','flat']] }
+};
+let lineChart, donutChart;
+function setFilter(f,btn) {
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const d=DATA[f];
+  ['kv1','kv2','kv3','kv4'].forEach((id,i)=>document.getElementById(id).textContent=d.kpis[i]);
+  ['kd1','kd2','kd3','kd4'].forEach((id,i)=>{const el=document.getElementById(id);el.className='kpi-delta kpi-'+(d.deltas[i][0]==='flat'?'up':d.deltas[i][0]);el.style.color=d.deltas[i][0]==='flat'?'var(--muted)':'';el.textContent=d.deltas[i][1];});
+  if(lineChart){lineChart.data.datasets[0].data=d.line2025;lineChart.data.datasets[1].data=d.line2024;lineChart.update('none');}
+  document.getElementById('tableBody').innerHTML=d.rows.map(r=>`<tr><td style="font-weight:500">${r[0]}</td><td style="color:var(--muted)">${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><span class="pill pill-${r[4]}">${r[4]==='up'?'▲ Rising':r[4]==='down'?'▼ Falling':'→ Stable'}</span></td></tr>`).join('');
+}
+function initCharts(){
+  const d=DATA.all,months=['Jan','Feb','Mar','Apr','May','Jun'];
+  lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:months,datasets:[{data:d.line2025,borderColor:'#c8960a',backgroundColor:'rgba(200,150,10,0.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#c8960a'},{data:d.line2024,borderColor:'#5a4a1a',backgroundColor:'transparent',borderWidth:1.5,fill:false,tension:0.4,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{color:'#5a5750',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#5a5750',font:{size:10},callback:v=>'€'+Math.round(v/1000)+'k'}}}}});
+  donutChart=new Chart(document.getElementById('donutChart'),{type:'doughnut',data:{labels:['Electronics','Home','Fashion','Other'],datasets:[{data:[38,27,21,14],backgroundColor:['#c8960a','#1D9E75','#5a4a1a','#4a4a4a'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
+}
+async function loadAI(){
+  const el=document.getElementById('aiText');
+  const prompt=`You are a concise business analyst. KPIs for an SME in June 2025: sales €142,800 (+18.4%), avg ticket €284 (+6.2%), 503 active clients (+31), conversion 6.8% (-0.4pp). Alerts: critical stock Model X7, online conversion -12%, South region +23% above target. Give an executive analysis in max 3 short sentences in English. No markdown.`;
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});const data=await res.json();el.textContent=data.content?.[0]?.text||'Analysis unavailable.';}
+  catch{el.textContent='Strong sales growth (+18%) driven by the South region. Online conversion drop is the immediate priority. Restock Model X7 before it impacts July revenue.';}
+}
+async function askAI(){
+  const input=document.getElementById('aiInput'),q=input.value.trim();
+  if(!q)return;
+  const el=document.getElementById('aiText');el.textContent='Analyzing...';input.value='';
+  const ctx=`SME dashboard June 2025: sales €142,800 (+18.4%), ticket €284, 503 clients, conv 6.8% (-0.4pp). Top: Smart TV (€28,400), Coffee Pro (€19,080), Sofa (€16,750). South +23%, online -12% conv, critical stock X7. Question: "${q}". Answer in max 3 sentences in English, executive. No markdown.`;
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:ctx}]})});const data=await res.json();el.textContent=data.content?.[0]?.text||'Could not process.';}
+  catch{el.textContent='Error connecting to AI engine.';}
+}
+document.getElementById('aiInput').addEventListener('keydown',e=>{if(e.key==='Enter')askAI();});
+function handleForm(e){e.preventDefault();document.getElementById('formSuccess').style.display='block';e.target.reset();}
+const observer=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('visible');});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+initCharts();setFilter('all',null);loadAI();
+</script>
+</body>
+</html>

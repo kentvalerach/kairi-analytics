@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KAIRI Analytics — Dashboards con IA para tu empresa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e0d;
+    --bg2: #161614;
+    --bg3: #1e1e1b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0ede6;
+    --muted: #8a8780;
+    --accent: #c8960a;
+    --accent2: #e8b020;
+    --accent-dim: rgba(200,150,10,0.12);
+    --success: #2d7a4f;
+    --success-text: #6fcf97;
+    --danger-text: #eb5757;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 4rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(14,14,13,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    font-size: 12px; padding: 8px 20px; border-radius: 4px;
+    background: var(--accent); color: #000; font-weight: 600;
+    text-decoration: none; letter-spacing: 0.05em;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+  .lang-sw { display:flex; gap:4px; }
+  .lang-opt { font-family: var(--font-mono); font-size:11px; padding:4px 8px; border-radius:3px; border:1px solid var(--border2); color:var(--muted); text-decoration:none; letter-spacing:0.08em; transition:all 0.15s; }
+  .lang-opt:hover { color:var(--text); border-color:var(--muted); }
+  .lang-opt.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8rem 4rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image: linear-gradient(var(--text) 1px, transparent 1px), linear-gradient(90deg, var(--text) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-tag {
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; animation: fadeUp 0.6s 0.1s forwards;
+  }
+  .hero-tag::before { content: ''; display: block; width: 24px; height: 1px; background: var(--accent); }
+  .hero-h1 {
+    font-family: var(--font-display); font-size: clamp(3rem, 7vw, 6rem);
+    line-height: 1.08; font-weight: 400; max-width: 820px;
+    opacity: 0; animation: fadeUp 0.7s 0.2s forwards;
+  }
+  .hero-h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.2rem); color: var(--muted); max-width: 540px;
+    margin-top: 1.5rem; font-weight: 300; line-height: 1.7;
+    opacity: 0; animation: fadeUp 0.7s 0.35s forwards;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;
+    opacity: 0; animation: fadeUp 0.7s 0.5s forwards;
+  }
+  .btn-primary {
+    padding: 14px 32px; background: var(--accent); color: #000;
+    font-family: var(--font-body); font-size: 14px; font-weight: 600;
+    border: none; border-radius: 4px; cursor: pointer; text-decoration: none;
+    letter-spacing: 0.04em; transition: background 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-ghost {
+    padding: 14px 32px; background: transparent; color: var(--text);
+    font-family: var(--font-body); font-size: 14px; font-weight: 400;
+    border: 1px solid var(--border2); border-radius: 4px; cursor: pointer;
+    text-decoration: none; letter-spacing: 0.04em; transition: border-color 0.2s, transform 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--muted); transform: translateY(-2px); }
+
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 4rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+    opacity: 0; animation: fadeUp 0.7s 0.65s forwards;
+  }
+  .stat-num { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+
+  /* PAIN SECTION */
+  .section { padding: 6rem 4rem; }
+  .section-tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+  .section-h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.15; font-weight: 400; max-width: 640px; }
+  .section-h2 em { font-style: italic; color: var(--accent); }
+
+  .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 3rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .pain-card { background: var(--bg2); padding: 2rem; transition: background 0.2s; }
+  .pain-card:hover { background: var(--bg3); }
+  .pain-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+  .pain-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .pain-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* DEMO SECTION */
+  .demo-section { padding: 6rem 4rem; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .demo-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1.5rem; }
+  .demo-note { font-size: 12px; color: var(--muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success-text); display: inline-block; animation: pulse 2s infinite; }
+
+  .dashboard-shell {
+    background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 10px; overflow: hidden;
+  }
+  .dash-bar {
+    background: var(--bg3); padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dash-url { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .dash-inner { padding: 1.5rem; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .kpi-card { background: var(--bg3); border-radius: 6px; padding: 14px 16px; border: 1px solid var(--border); }
+  .kpi-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--font-mono); }
+  .kpi-val { font-size: 1.4rem; font-weight: 500; line-height: 1; }
+  .kpi-delta { font-size: 11px; margin-top: 5px; }
+  .kpi-up { color: var(--success-text); }
+  .kpi-down { color: var(--danger-text); }
+
+  .charts-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .chart-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; }
+  .chart-lbl { font-size: 11px; color: var(--muted); margin-bottom: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .bottom-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .alert-panel { background: rgba(235,87,87,0.06); border: 1px solid rgba(235,87,87,0.2); border-radius: 6px; padding: 14px; }
+  .alert-lbl { font-size: 10px; color: var(--danger-text); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .alert-item { font-size: 11px; color: rgba(235,87,87,0.8); padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .ai-panel { background: var(--accent-dim); border: 1px solid rgba(200,150,10,0.2); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; }
+  .ai-lbl { font-size: 10px; color: var(--accent); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .ai-response { font-size: 11px; color: var(--text); line-height: 1.6; flex: 1; min-height: 52px; }
+  .ai-input-row { display: flex; gap: 6px; margin-top: 10px; }
+  .ai-input {
+    flex: 1; font-size: 11px; padding: 6px 10px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(200,150,10,0.3);
+    border-radius: 4px; color: var(--text); outline: none;
+    font-family: var(--font-body);
+  }
+  .ai-input:focus { border-color: var(--accent); }
+  .ai-ask-btn {
+    font-size: 11px; padding: 6px 12px; border-radius: 4px;
+    background: var(--accent); border: none; color: #000;
+    cursor: pointer; font-weight: 600; font-family: var(--font-body);
+    transition: background 0.2s;
+  }
+  .ai-ask-btn:hover { background: var(--accent2); }
+
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .f-btn {
+    font-size: 10px; padding: 4px 12px; border-radius: 20px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--muted); cursor: pointer; font-family: var(--font-mono);
+    letter-spacing: 0.05em; transition: all 0.15s;
+  }
+  .f-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+
+  .tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .tbl th { color: var(--muted); font-weight: 400; padding: 4px 8px 8px 0; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; text-align: left; }
+  .tbl td { padding: 7px 8px 7px 0; color: var(--text); border-bottom: 1px solid var(--border); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .pill { font-size: 9px; padding: 2px 8px; border-radius: 20px; }
+  .pill-up { background: rgba(111,207,151,0.15); color: var(--success-text); }
+  .pill-down { background: rgba(235,87,87,0.15); color: var(--danger-text); }
+  .pill-flat { background: rgba(138,135,128,0.15); color: var(--muted); }
+  .legend-row { display: flex; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+  .legend-sq { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* HOW IT WORKS */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 3rem; }
+  .step { padding: 2rem 1.5rem; position: relative; }
+  .step-num { font-family: var(--font-display); font-size: 3rem; color: var(--border2); line-height: 1; margin-bottom: 1rem; }
+  .step-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .step-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .step-connector { position: absolute; top: 3.2rem; right: -1px; width: 1px; height: 24px; background: var(--accent-dim); }
+
+  /* PACKAGES */
+  .packages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .pkg { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; position: relative; transition: border-color 0.2s, transform 0.2s; }
+  .pkg:hover { border-color: var(--border2); transform: translateY(-4px); }
+  .pkg.featured { border-color: var(--accent); }
+  .pkg.featured::before { content: 'MÁS POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; font-size: 9px; font-weight: 700; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.1em; font-family: var(--font-mono); }
+  .pkg-name { font-family: var(--font-mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+  .pkg-price { font-family: var(--font-display); font-size: 2.5rem; line-height: 1; margin-bottom: 0.25rem; }
+  .pkg-period { font-size: 12px; color: var(--muted); margin-bottom: 1.5rem; }
+  .pkg-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 2rem; }
+  .pkg-features li { font-size: 13px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px; }
+  .pkg-features li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+  .pkg-btn {
+    width: 100%; padding: 12px; border-radius: 4px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-body); letter-spacing: 0.04em;
+    transition: all 0.2s; text-align: center; text-decoration: none; display: block;
+  }
+  .pkg-btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+  .pkg-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .pkg-btn-filled { background: var(--accent); border: none; color: #000; font-weight: 600; }
+  .pkg-btn-filled:hover { background: var(--accent2); }
+
+  /* CONTACT */
+  .contact-section { padding: 6rem 4rem; background: var(--bg2); border-top: 1px solid var(--border); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .contact-h2 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; font-weight: 400; margin-bottom: 1rem; }
+  .contact-h2 em { font-style: italic; color: var(--accent); }
+  .contact-sub { font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .contact-data { margin-top: 2rem; display: flex; flex-direction: column; gap: 12px; }
+  .contact-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .contact-item a { color: var(--accent); text-decoration: none; }
+  .contact-item a:hover { text-decoration: underline; }
+  .contact-icon { width: 32px; height: 32px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+
+  .form { display: flex; flex-direction: column; gap: 14px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .form-input {
+    padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--text); font-family: var(--font-body); font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  textarea.form-input { resize: vertical; min-height: 100px; }
+  .form-submit {
+    padding: 14px; background: var(--accent); border: none; border-radius: 4px;
+    color: #000; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-body); letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .form-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+  .form-success { display: none; padding: 1rem; background: rgba(111,207,151,0.1); border: 1px solid rgba(111,207,151,0.3); border-radius: 4px; color: var(--success-text); font-size: 13px; text-align: center; }
+
+  /* FOOTER */
+  footer {
+    padding: 2rem 4rem; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-logo { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .footer-text { font-size: 12px; color: var(--muted); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s, transform 0.7s; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    .section, .demo-section, .contact-section { padding: 4rem 1.5rem; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid, .bottom-panels { grid-template-columns: 1fr; }
+    .pain-grid, .steps, .packages, .contact-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 2rem; flex-wrap: wrap; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">KAIRI Analytics</div>
+  <div class="nav-links">
+    <a href="#demo">Demo en vivo</a>
+    <a href="#proceso">Proceso</a>
+    <a href="#paquetes">Paquetes</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;"><div class="lang-sw"><a href="../en/" class="lang-opt">EN</a><a href="../de/" class="lang-opt">DE</a><a href="../es/" class="lang-opt active">ES</a></div><a href="#contacto" class="nav-cta">Hablar con un experto</a></div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-tag">Inteligencia de negocio · Dresden, Alemania</div>
+  <h1 class="hero-h1">Tu empresa toma decisiones con datos de <em>hace dos semanas.</em> Cambia eso.</h1>
+  <p class="hero-sub">Construimos dashboards inteligentes con IA que se actualizan solos, muestran lo que importa y detectan problemas antes de que los veas en Excel.</p>
+  <div class="hero-actions">
+    <a href="#demo" class="btn-primary">Ver demo en vivo</a>
+    <a href="#contacto" class="btn-ghost">Hablar con nosotros</a>
+  </div>
+  <div class="hero-stats">
+    <div>
+      <div class="stat-num">1 sem.</div>
+      <div class="stat-label">tiempo de entrega típico</div>
+    </div>
+    <div>
+      <div class="stat-num">0 €</div>
+      <div class="stat-label">infraestructura para PYMEs</div>
+    </div>
+    <div>
+      <div class="stat-num">24/7</div>
+      <div class="stat-label">datos en tiempo real</div>
+    </div>
+    <div>
+      <div class="stat-num">IA</div>
+      <div class="stat-label">análisis automático incluido</div>
+    </div>
+  </div>
+</section>
+
+<!-- PAIN -->
+<section class="section" id="problema">
+  <div class="reveal">
+    <div class="section-tag">El problema</div>
+    <h2 class="section-h2">¿Cuántas horas pierde tu equipo <em>cada semana</em> en reportes manuales?</h2>
+  </div>
+  <div class="pain-grid reveal" style="transition-delay:0.15s">
+    <div class="pain-card">
+      <div class="pain-icon">📊</div>
+      <div class="pain-title">Excel interminable</div>
+      <div class="pain-text">Horas consolidando hojas cada lunes. Errores, versiones distintas, datos que no cuadran.</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">⏳</div>
+      <div class="pain-title">Decisiones con retraso</div>
+      <div class="pain-text">Cuando el reporte está listo, los datos ya tienen una semana. El mercado no espera.</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">🔍</div>
+      <div class="pain-title">Problemas invisibles</div>
+      <div class="pain-text">Una caída en ventas, un stock crítico, un cliente que se va — nadie lo ve hasta que es tarde.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section" id="demo">
+  <div class="demo-header reveal">
+    <div>
+      <div class="section-tag">Demo interactivo</div>
+      <h2 class="section-h2" style="max-width:500px">Así se ve tu negocio <em>en tiempo real</em></h2>
+    </div>
+    <div class="demo-note"><span class="live-dot"></span> IA activa · Datos ficticios de ejemplo</div>
+  </div>
+
+  <div class="dashboard-shell reveal" style="transition-delay:0.2s">
+    <div class="dash-bar">
+      <div class="dash-dot" style="background:#ff5f57"></div>
+      <div class="dash-dot" style="background:#febc2e"></div>
+      <div class="dash-dot" style="background:#28c840"></div>
+      <div class="dash-url">tuempresa.kairi-analytics.com · Panel de ventas</div>
+    </div>
+    <div class="dash-inner">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">Panel de control</div>
+          <div style="font-size:16px;font-weight:500;">Ventas &amp; Rendimiento · Ene–Jun 2025</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">Actualizado: hace 2 min</div>
+      </div>
+
+      <div class="filter-row">
+        <button class="f-btn active" onclick="setFilter('todos',this)">Todos</button>
+        <button class="f-btn" onclick="setFilter('norte',this)">Norte</button>
+        <button class="f-btn" onclick="setFilter('sur',this)">Sur</button>
+        <button class="f-btn" onclick="setFilter('online',this)">Online</button>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-lbl">Ventas totales</div>
+          <div class="kpi-val" id="kv1">€142.800</div>
+          <div class="kpi-delta kpi-up" id="kd1">▲ 18.4% vs mes ant.</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Ticket promedio</div>
+          <div class="kpi-val" id="kv2">€284</div>
+          <div class="kpi-delta kpi-up" id="kd2">▲ 6.2%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Clientes activos</div>
+          <div class="kpi-val" id="kv3">503</div>
+          <div class="kpi-delta kpi-up" id="kd3">▲ 31 nuevos</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-lbl">Tasa de conversión</div>
+          <div class="kpi-val" id="kv4">6.8%</div>
+          <div class="kpi-delta kpi-down" id="kd4">▼ 0.4 pp</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-panel">
+          <div class="chart-lbl">Evolución mensual de ventas</div>
+          <div class="legend-row">
+            <span class="legend-item"><span class="legend-sq" style="background:#c8960a"></span>2025</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#5a4a1a"></span>2024</span>
+          </div>
+          <div style="position:relative;height:160px;"><canvas id="lineChart"></canvas></div>
+        </div>
+        <div class="chart-panel">
+          <div class="chart-lbl">Ventas por categoría</div>
+          <div style="position:relative;height:130px;"><canvas id="donutChart"></canvas></div>
+          <div class="legend-row" style="margin-top:8px;">
+            <span class="legend-item"><span class="legend-sq" style="background:#c8960a"></span>Electrónica 38%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#1D9E75"></span>Hogar 27%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#5a4a1a"></span>Moda 21%</span>
+            <span class="legend-item"><span class="legend-sq" style="background:#4a4a4a"></span>Otros 14%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-panel" style="margin-bottom:10px;">
+        <div class="chart-lbl">Productos top — Junio 2025</div>
+        <table class="tbl">
+          <thead><tr>
+            <th>Producto</th><th>Región</th><th>Uds.</th><th>Ingresos</th><th>Tendencia</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="bottom-panels">
+        <div class="alert-panel">
+          <div class="alert-lbl">Alertas automáticas</div>
+          <div class="alert-item">◆ Stock crítico: Modelo X7 — quedan 8 uds.</div>
+          <div class="alert-item">◆ Conversión online cayó 12% esta semana</div>
+          <div class="alert-item">◆ Región Sur supera objetivo mensual (+23%)</div>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-lbl"><span class="live-dot"></span> Análisis IA</div>
+          <div class="ai-response" id="aiText">Cargando análisis...</div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="aiInput" type="text" placeholder="Pregunta algo sobre tus datos..." />
+            <button class="ai-ask-btn" onclick="askAI()">Preguntar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="section" id="proceso">
+  <div class="reveal">
+    <div class="section-tag">Cómo funciona</div>
+    <h2 class="section-h2">De tus datos en Excel a tu dashboard <em>en una semana</em></h2>
+  </div>
+  <div class="steps reveal" style="transition-delay:0.15s;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:3rem;">
+    <div class="step" style="border-right:1px solid var(--border);">
+      <div class="step-num">01</div>
+      <div class="step-title">Diagnóstico gratuito</div>
+      <div class="step-text">Reunión de 30 minutos para entender tus datos, tus fuentes y qué decisiones quieres tomar más rápido.</div>
+    </div>
+    <div class="step" style="border-right:1px solid var(--border);">
+      <div class="step-num">02</div>
+      <div class="step-title">Diseño y validación</div>
+      <div class="step-text">Te mostramos un prototipo del dashboard antes de construirlo. Apruebas tú, no nosotros.</div>
+    </div>
+    <div class="step" style="border-right:1px solid var(--border);">
+      <div class="step-num">03</div>
+      <div class="step-title">Construcción e integración</div>
+      <div class="step-text">Conectamos tus fuentes de datos, construimos el dashboard y lo desplegamos en una URL privada tuya.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Entrega y soporte</div>
+      <div class="step-text">Formación de 1 hora para tu equipo. Soporte incluido el primer mes. Tú decides si continuar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PACKAGES -->
+<section class="section" id="paquetes" style="border-top:1px solid var(--border);">
+  <div class="reveal">
+    <div class="section-tag">Paquetes</div>
+    <h2 class="section-h2">Precios claros, <em>sin sorpresas</em></h2>
+  </div>
+  <div class="packages reveal" style="transition-delay:0.15s">
+    <div class="pkg">
+      <div class="pkg-name">Starter</div>
+      <div class="pkg-price">€500</div>
+      <div class="pkg-period">pago único · entrega en 5 días</div>
+      <ul class="pkg-features">
+        <li>1 dashboard con hasta 5 KPIs</li>
+        <li>1 fuente de datos (Excel, CSV, Google Sheets)</li>
+        <li>Actualización automática diaria</li>
+        <li>URL privada accesible desde cualquier dispositivo</li>
+        <li>1 mes de soporte incluido</li>
+      </ul>
+      <a href="#contacto" class="pkg-btn pkg-btn-outline">Empezar ahora</a>
+    </div>
+    <div class="pkg featured">
+      <div class="pkg-name">Business</div>
+      <div class="pkg-price">€1.200</div>
+      <div class="pkg-period">pago único · entrega en 7 días</div>
+      <ul class="pkg-features">
+        <li>Dashboard completo con KPIs ilimitados</li>
+        <li>Hasta 3 fuentes de datos conectadas</li>
+        <li>Actualización en tiempo real o programada</li>
+        <li>Alertas automáticas por email o Telegram</li>
+        <li>Análisis IA incluido en el panel</li>
+        <li>Filtros interactivos por región, producto, período</li>
+        <li>1 mes de soporte prioritario</li>
+      </ul>
+      <a href="#contacto" class="pkg-btn pkg-btn-filled">Empezar ahora</a>
+    </div>
+    <div class="pkg">
+      <div class="pkg-name">AI-Powered</div>
+      <div class="pkg-price">€2.400</div>
+      <div class="pkg-period">pago único · entrega en 10 días</div>
+      <ul class="pkg-features">
+        <li>Todo lo del paquete Business</li>
+        <li>Detección automática de anomalías</li>
+        <li>Predicciones y proyecciones con ML</li>
+        <li>Chat con tus datos en lenguaje natural</li>
+        <li>Integración con ERP o base de datos propia</li>
+        <li>3 meses de soporte y evolución incluidos</li>
+      </ul>
+      <a href="#contacto" class="pkg-btn pkg-btn-outline">Hablar con nosotros</a>
+    </div>
+  </div>
+  <p class="reveal" style="text-align:center;font-size:13px;color:var(--muted);margin-top:1.5rem;transition-delay:0.3s;">
+    Mantenimiento mensual opcional desde €150/mes · Diagnóstico inicial siempre gratuito
+  </p>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contacto">
+  <div class="contact-grid">
+    <div class="reveal">
+      <div class="section-tag">Contacto</div>
+      <h2 class="contact-h2">Hablemos sobre tus <em>datos</em></h2>
+      <p class="contact-sub">El diagnóstico inicial es gratuito y sin compromiso. En 30 minutos sabemos si podemos ayudarte y cómo.</p>
+      <div class="contact-data">
+        <div class="contact-item">
+          <div class="contact-icon">✉</div>
+          <a href="mailto:kontakt@kairi-analytics.com">kontakt@kairi-analytics.com</a>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">in</div>
+          <a href="https://www.linkedin.com/in/kent-valera-chirinos-44ba721b/?locale=en_US" target="_blank">linkedin.com/in/kent-valera-chirinos-44ba721b</a>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          Dresden, Alemania · Servicio remoto internacional
+        </div>
+      </div>
+    </div>
+    <div class="reveal" style="transition-delay:0.15s">
+      <form class="form" name="contacto" action="https://formspree.io/f/xkopavvr" method="POST" onsubmit="handleForm(event)">
+        <div class="form-field">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" type="text" placeholder="Tu nombre" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="tu@empresa.com" required />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Empresa (opcional)</label>
+          <input class="form-input" type="text" placeholder="Nombre de tu empresa" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">¿Qué necesitas?</label>
+          <textarea class="form-input" placeholder="Cuéntanos brevemente qué datos manejas y qué quieres ver en tu dashboard..." required></textarea>
+        </div>
+        <button type="submit" class="form-submit">Solicitar diagnóstico gratuito →</button>
+        <div class="form-success" id="formSuccess">✓ Mensaje enviado. Te contactamos en menos de 24h.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">KAIRI Analytics · Dresden, DE</div>
+  <div class="footer-text">© 2025 · Dashboards con IA para PYMEs</div>
+</footer>
+
+<script>
+const DATA = {
+  todos: {
+    kpis: ['€142.800','€284','503','6.8%'],
+    deltas: [['up','▲ 18.4% vs mes ant.'],['up','▲ 6.2%'],['up','▲ 31 nuevos'],['down','▼ 0.4 pp']],
+    line2025: [18200,21400,19800,24600,27300,31500],
+    line2024: [14100,16200,17800,19200,21000,22900],
+    rows: [
+      ['Smart TV 55"','Norte',142,'€28.400','up'],
+      ['Cafetera Pro','Online',318,'€19.080','up'],
+      ['Sofá Modular','Sur',67,'€16.750','flat'],
+      ['Zapatillas Run','Norte',412,'€14.832','up'],
+      ['Tablet 10"','Online',98,'€12.250','down'],
+    ]
+  },
+  norte: {
+    kpis: ['€58.300','€312','189','7.4%'],
+    deltas: [['up','▲ 22.1%'],['up','▲ 8.1%'],['up','▲ 14 nuevos'],['up','▲ 0.2 pp']],
+    line2025: [7200,9100,8400,10800,11200,11600],
+    line2024: [5600,6800,7200,8100,8900,9400],
+    rows: [
+      ['Smart TV 55"','Norte',142,'€28.400','up'],
+      ['Zapatillas Run','Norte',412,'€14.832','up'],
+      ['Frigorífico XL','Norte',24,'€9.600','flat'],
+      ['Auriculares BT','Norte',67,'€3.350','up'],
+      ['Mesa comedor','Norte',12,'€2.160','down'],
+    ]
+  },
+  sur: {
+    kpis: ['€47.100','€261','214','6.1%'],
+    deltas: [['up','▲ 23.0%'],['up','▲ 4.8%'],['up','▲ 9 nuevos'],['flat','→ sin cambio']],
+    line2025: [5800,7200,6900,8100,9400,9700],
+    line2024: [4800,5600,6100,6800,7200,7800],
+    rows: [
+      ['Sofá Modular','Sur',67,'€16.750','flat'],
+      ['Cafetera Pro','Sur',98,'€5.880','up'],
+      ['Lámpara LED','Sur',210,'€4.200','up'],
+      ['Smart TV 43"','Sur',31,'€4.030','down'],
+      ['Silla Oficina','Sur',44,'€3.080','flat'],
+    ]
+  },
+  online: {
+    kpis: ['€37.400','€298','100','6.3%'],
+    deltas: [['down','▼ 3.2%'],['up','▲ 2.1%'],['up','▲ 8 nuevos'],['down','▼ 1.2 pp']],
+    line2025: [5200,5100,4500,5700,8700,8200],
+    line2024: [3700,4800,4500,4300,5900,6000],
+    rows: [
+      ['Cafetera Pro','Online',318,'€19.080','up'],
+      ['Tablet 10"','Online',98,'€12.250','down'],
+      ['Auriculares BT','Online',102,'€5.100','up'],
+      ['Teclado Mec.','Online',28,'€1.960','flat'],
+    ]
+  }
+};
+
+let lineChart, donutChart;
+
+function setFilter(f, btn) {
+  document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const d = DATA[f];
+  const kv = ['kv1','kv2','kv3','kv4'];
+  const kd = ['kd1','kd2','kd3','kd4'];
+  d.kpis.forEach((v,i) => document.getElementById(kv[i]).textContent = v);
+  d.deltas.forEach((v,i) => {
+    const el = document.getElementById(kd[i]);
+    el.className = 'kpi-delta kpi-' + (v[0]==='flat'?'up':v[0]);
+    el.style.color = v[0]==='flat' ? 'var(--muted)' : '';
+    el.textContent = v[1];
+  });
+  if (lineChart) {
+    lineChart.data.datasets[0].data = d.line2025;
+    lineChart.data.datasets[1].data = d.line2024;
+    lineChart.update('none');
+  }
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = d.rows.map(r => `<tr>
+    <td style="font-weight:500">${r[0]}</td>
+    <td style="color:var(--muted)">${r[1]}</td>
+    <td>${r[2]}</td>
+    <td>${r[3]}</td>
+    <td><span class="pill pill-${r[4]}">${r[4]==='up'?'▲ Sube':r[4]==='down'?'▼ Baja':'→ Estable'}</span></td>
+  </tr>`).join('');
+}
+
+function initCharts() {
+  const d = DATA.todos;
+  const months = ['Ene','Feb','Mar','Abr','May','Jun'];
+  lineChart = new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { data: d.line2025, borderColor:'#c8960a', backgroundColor:'rgba(200,150,10,0.08)', borderWidth:2, fill:true, tension:0.4, pointRadius:3, pointBackgroundColor:'#c8960a' },
+        { data: d.line2024, borderColor:'#5a4a1a', backgroundColor:'transparent', borderWidth:1.5, fill:false, tension:0.4, pointRadius:2 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{mode:'index',intersect:false} },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#5a5750',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5a5750',font:{size:10},callback:v=>'€'+Math.round(v/1000)+'k'} }
+      }
+    }
+  });
+  donutChart = new Chart(document.getElementById('donutChart'), {
+    type:'doughnut',
+    data:{
+      labels:['Electrónica','Hogar','Moda','Otros'],
+      datasets:[{ data:[38,27,21,14], backgroundColor:['#c8960a','#1D9E75','#5a4a1a','#4a4a4a'], borderWidth:0, hoverOffset:4 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins:{ legend:{display:false} }
+    }
+  });
+}
+
+async function loadAI() {
+  const el = document.getElementById('aiText');
+  const prompt = `Eres analista de negocio conciso. KPIs PYME Junio 2025: ventas €142.800 (+18.4%), ticket €284 (+6.2%), 503 clientes (+31), conversión 6.8% (-0.4pp). Alertas: stock crítico Modelo X7, conversión online -12%, Región Sur +23% sobre objetivo. Análisis ejecutivo en máximo 3 frases en español. Sin markdown.`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    el.textContent = data.content?.[0]?.text || 'Análisis no disponible.';
+  } catch {
+    el.textContent = 'Crecimiento sólido en ventas (+18%) liderado por región Sur. La caída en conversión online es la prioridad inmediata. Reponer Modelo X7 antes de que impacte los ingresos de julio.';
+  }
+}
+
+async function askAI() {
+  const input = document.getElementById('aiInput');
+  const q = input.value.trim();
+  if (!q) return;
+  const el = document.getElementById('aiText');
+  el.textContent = 'Analizando...';
+  input.value = '';
+  const ctx = `Dashboard PYME Junio 2025: ventas €142.800 (+18.4%), ticket €284, 503 clientes, conversión 6.8% (-0.4pp). Top productos: Smart TV (€28.400), Cafetera Pro (€19.080), Sofá (€16.750). Sur +23% objetivo, online -12% conversión, stock crítico X7. Pregunta: "${q}". Responde en max 3 frases en español, ejecutivo. Sin markdown.`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:ctx}] })
+    });
+    const data = await res.json();
+    el.textContent = data.content?.[0]?.text || 'No se pudo procesar.';
+  } catch {
+    el.textContent = 'Error al conectar con el motor de IA.';
+  }
+}
+
+document.getElementById('aiInput').addEventListener('keydown', e => { if (e.key==='Enter') askAI(); });
+
+function handleForm(e) {
+  e.preventDefault();
+  document.getElementById('formSuccess').style.display = 'block';
+  e.target.reset();
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(en => { if (en.isIntersecting) en.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+initCharts();
+setFilter('todos', null);
+loadAI();
+</script>
+</body>
+</html>
